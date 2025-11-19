@@ -1,33 +1,31 @@
 # cinestream\backend\cinecore\settings.py
-# cinestream/backend/cinecore/settings.py
 
 import os
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
 import dj_database_url
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
-# Charger les variables d’environnement depuis le fichier .env
+# Load .env
 load_dotenv()
 
-# =============================
-# 📍 BASE DIRECTORY
-# =============================
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# =============================
-# 🔐 SECURITY & ENV VARS
-# =============================
+# =========================
+# 🔐 SECRET & DEBUG
+# =========================
 SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
-# =============================
-# 🔧 INSTALLED APPS
-# =============================
+# =========================
+# 📦 INSTALLED APPS
+# =========================
 INSTALLED_APPS = [
-    # Django Apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -35,13 +33,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # External apps
+    # External
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
     'channels',
+    'cloudinary',
+    'cloudinary_storage',
 
-    # Local apps
+    # Internal apps
     'users',
     'catalog',
     'orders',
@@ -51,25 +51,24 @@ INSTALLED_APPS = [
     'settings_app',
 ]
 
-# =============================
+# =========================
 # 👥 AUTH
-# =============================
+# =========================
 AUTH_USER_MODEL = "users.User"
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=int(os.getenv("ACCESS_TOKEN_LIFETIME", 1))),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(os.getenv("REFRESH_TOKEN_LIFETIME", 7))),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# =============================
-# 🧱 MIDDLEWARE
-# =============================
+# =========================
+# 🔌 MIDDLEWARE
+# =========================
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -78,9 +77,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# =============================
-# 🛣 URL & TEMPLATES
-# =============================
 ROOT_URLCONF = 'cinecore.urls'
 
 TEMPLATES = [
@@ -99,71 +95,64 @@ TEMPLATES = [
     },
 ]
 
-# =============================
-# ⚙️ WSGI / ASGI
-# =============================
-WSGI_APPLICATION = 'cinecore.wsgi.application'
-ASGI_APPLICATION = 'cinecore.asgi.application'
+# =========================
+# 💬 ASGI & CHANNELS (WebSockets)
+# =========================
+ASGI_APPLICATION = "cinecore.asgi.application"
 
-# =============================
-# 🔄 CHANNELS (WebSockets)
-# =============================
 CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
-    }
+    "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
 }
 
-# =============================
-# 🗄 DATABASE
-# =============================
+WSGI_APPLICATION = 'cinecore.wsgi.application'
+
+# =========================
+# 🗄️ DATABASE (Render PostgreSQL)
+# =========================
 DATABASES = {
     'default': dj_database_url.config(default=os.getenv("DATABASE_URL"))
 }
 
-# =============================
-# 🔐 PASSWORD VALIDATION
-# =============================
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
-
-# =============================
-# 🌍 INTERNATIONALIZATION
-# =============================
+# =========================
+# 🌍 I18N
+# =========================
 LANGUAGE_CODE = 'fr-FR'
 TIME_ZONE = 'Africa/Douala'
 USE_I18N = True
 USE_TZ = True
 
-# =============================
-# 🖼 STATIC & MEDIA
-# =============================
+# =========================
+# 📁 STATIC & MEDIA
+# =========================
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-MEDIA_URL = os.getenv("MEDIA_URL", "/media/")
-MEDIA_ROOT = os.getenv("MEDIA_ROOT", str(BASE_DIR / "media"))
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# =============================
-# 🔒 DRF DEFAULTS
-# =============================
+# ==== CLOUDINARY STORAGE (MEDIA) ====
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = ''
+
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET")
+)
+
+# =========================
+# 🔒 REST & CORS
+# =========================
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ),
 }
 
-# =============================
-# 🌐 CORS
-# =============================
 CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
 
 CORS_ALLOW_CREDENTIALS = True
