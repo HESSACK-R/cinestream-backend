@@ -1,15 +1,27 @@
 # cinestream/backend/telegram_bot/bot.py
-import os
 import asyncio
+import os
 from telegram import Bot
 from telegram.constants import ParseMode
 
+# Charger les variables d’environnement
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID", "0"))
+ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 
-bot = Bot(token=TELEGRAM_TOKEN)
+def get_bot():
+    """Crée une instance du bot seulement lorsque nécessaire."""
+    token = TELEGRAM_TOKEN
+    if not token:
+        print("⚠️ TELEGRAM_TOKEN manquant dans .env")
+        return None
+    return Bot(token=token)
+
 
 async def send_telegram_notification_async(chat_id, message):
+    bot = get_bot()
+    if not bot:
+        return
+    
     try:
         await bot.send_message(
             chat_id=chat_id,
@@ -21,12 +33,22 @@ async def send_telegram_notification_async(chat_id, message):
     except Exception as e:
         print(f"⚠️ Erreur Telegram ({chat_id}) : {e}")
 
+
 def send_telegram_notification(chat_id, message):
     try:
         asyncio.run(send_telegram_notification_async(chat_id, message))
+    except RuntimeError:
+        # Cas : boucle event déjà en cours
+        loop = asyncio.get_event_loop()
+        loop.create_task(send_telegram_notification_async(chat_id, message))
     except Exception as e:
         print(f"⚠️ Erreur envoi sync ({chat_id}) : {e}")
 
+
 def notify_admin(message):
-    print("\n📡 Envoi de notification Telegram...")
+    if not ADMIN_CHAT_ID:
+        print("⚠️ ADMIN_CHAT_ID introuvable dans .env")
+        return
+
+    print("\n📡 [SYSTEM] Envoi de notification à l’admin…")
     send_telegram_notification(ADMIN_CHAT_ID, message)

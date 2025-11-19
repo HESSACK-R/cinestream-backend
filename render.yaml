@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: cinestream-backend
+    env: python
+    region: frankfurt
+    buildCommand: |
+      pip install -r requirements.txt
+    startCommand: daphne cinecore.asgi:application --port $PORT --bind 0.0.0.0
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: SECRET_KEY
+        sync: false
+      - key: DEBUG
+        value: False
+      - key: TELEGRAM_TOKEN
+        sync: false
+      - key: ADMIN_CHAT_ID
+        sync: false
+      - key: MEDIA_ROOT
+        value: /opt/render/project/src/media
+      - key: MEDIA_URL
+        value: /media/
