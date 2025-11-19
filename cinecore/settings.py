@@ -4,6 +4,11 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
+import dj_database_url
+
+# Charger les variables d’environnement depuis le fichier .env
+load_dotenv()
 
 # =============================
 # 📍 BASE DIRECTORY
@@ -13,10 +18,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # =============================
 # 🔐 SECURITY & ENV VARS
 # =============================
-SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key")
-DEBUG = os.getenv("DEBUG", "True") == "True"
+SECRET_KEY = os.getenv("SECRET_KEY")
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
 # =============================
 # 🔧 INSTALLED APPS
@@ -113,10 +118,7 @@ CHANNEL_LAYERS = {
 # 🗄 DATABASE
 # =============================
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.getenv("DATABASE_NAME", BASE_DIR / "db.sqlite3"),
-    }
+    'default': dj_database_url.config(default=os.getenv("DATABASE_URL"))
 }
 
 # =============================
@@ -162,9 +164,7 @@ REST_FRAMEWORK = {
 # =============================
 # 🌐 CORS
 # =============================
-CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000"
-).split(",")
+CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
 
 CORS_ALLOW_CREDENTIALS = True
 

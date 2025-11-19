@@ -5,6 +5,8 @@ channels
 daphne
 whitenoise
 Pillow
-python-telegram-bot==20.0
+python-telegram-bot==20.3
+psycopg2-binary
+django-cors-headers
 psycopg2-binary
 gunicorn
