@@ -18,7 +18,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "local-secret-key")
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "cinestream-backend-33c3.onrender.com",
+]
 
 # ======================================================
 # 📦 INSTALLED APPS
@@ -31,15 +35,14 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # External apps
+    # External
     "corsheaders",
     "rest_framework",
     "rest_framework_simplejwt",
-    "channels",
     "cloudinary",
     "cloudinary_storage",
 
-    # Internal apps
+    # Internal
     "users",
     "catalog",
     "orders",
@@ -50,7 +53,7 @@ INSTALLED_APPS = [
 ]
 
 # ======================================================
-# 👥 AUTH
+# 🧑 AUTH
 # ======================================================
 AUTH_USER_MODEL = "users.User"
 
@@ -64,11 +67,12 @@ SIMPLE_JWT = {
 # 🔌 MIDDLEWARE
 # ======================================================
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",  # MUST BE FIRST
+    "django.middleware.common.CommonMiddleware",
+
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -94,21 +98,15 @@ TEMPLATES = [
 ]
 
 # ======================================================
-# 💬 ASGI & CHANNELS (WebSockets)
+# 🌐 WSGI (pas de WebSocket)
 # ======================================================
-ASGI_APPLICATION = "cinecore.asgi.application"
-
-CHANNEL_LAYERS = {
-    "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-}
-
 WSGI_APPLICATION = "cinecore.wsgi.application"
 
 # ======================================================
-# 🗄 DATABASE (SQLite en local, PostgreSQL sur Render)
+# 🗄 DATABASE
 # ======================================================
 if DEBUG:
-    print("🔧 MODE LOCAL : SQLite utilisé")
+    print("🔧 MODE LOCAL : SQLite")
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -116,9 +114,9 @@ if DEBUG:
         }
     }
 else:
-    print("🚀 MODE PRODUCTION : PostgreSQL Render utilisé")
+    print("🚀 MODE PRODUCTION : PostgreSQL Render")
     DATABASES = {
-        "default": dj_database_url.config(default=os.getenv("DATABASE_URL"))
+        "default": dj_database_url.config(conn_max_age=600, ssl_require=True)
     }
 
 # ======================================================
@@ -139,7 +137,6 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # ---------- CLOUDINARY ----------
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
-
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
@@ -162,19 +159,32 @@ REST_FRAMEWORK = {
 }
 
 if not DEBUG:
-    REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
-        "rest_framework.renderers.JSONRenderer",
-    ]
+    REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = ["rest_framework.renderers.JSONRenderer"]
 
-CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+# === CORS FIX FOR VERCEL FRONTEND ===
+CORS_ALLOW_ALL_ORIGINS = False
+
+CORS_ALLOWED_ORIGINS = [
+    "https://cinestream-frontend.vercel.app",
+]
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "origin",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
 CORS_ALLOW_CREDENTIALS = True
 
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-
-CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
 CSRF_TRUSTED_ORIGINS = [
+    "https://cinestream-frontend.vercel.app",
+    "https://*.vercel.app",
     "https://cinestream-backend-33c3.onrender.com",
-    "https://*.onrender.com",
 ]
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
