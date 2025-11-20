@@ -8,7 +8,7 @@ from .views import (
     RegisterView,
     CustomLoginView,
     UserViewSet,
-    create_superuser_open  # ← temporaire
+    create_superuser_open
 )
 
 router = DefaultRouter()
