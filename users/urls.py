@@ -5,11 +5,11 @@ from rest_framework.routers import DefaultRouter
 from .views import UserViewSet, RegisterView, CustomLoginView
 
 router = DefaultRouter()
-router.register("", UserViewSet, basename="users")
+router.register("accounts", UserViewSet, basename="accounts")
 
 urlpatterns = [
-    path("auth/register/", RegisterView.as_view(), name="register"),
-    path("auth/login/", CustomLoginView.as_view(), name="login"),
+    path("register/", RegisterView.as_view(), name="register"),
+    path("login/", CustomLoginView.as_view(), name="login"),
 ]
 
 urlpatterns += router.urls
