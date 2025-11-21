@@ -26,7 +26,7 @@ async def send_telegram_notification_async(chat_id, message):
         await bot.send_message(
             chat_id=chat_id,
             text=message,
-            parse_mode=ParseMode.MARKDOWN,
+            parse_mode=ParseMode.MARKDOWN_V2,
             disable_web_page_preview=True
         )
         print(f"✅ Message Telegram envoyé à {chat_id}")
