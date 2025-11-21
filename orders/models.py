@@ -3,8 +3,6 @@ from django.db import models
 from django.conf import settings
 from users.models import User
 from catalog.models import Movie, Season
-# from telegram_bot.bot import notify_admin
-# from django.db.models.signals import post_save
 
 class Order(models.Model):
     STATUS_CHOICES = [
@@ -53,43 +51,3 @@ class Payment(models.Model):
     def __str__(self):
         return f"Paiement {self.id} ({self.method})"
 
-
-def send_order_notification(sender, instance, created, **kwargs):
-    if created:
-        user = instance.user
-        total = instance.total_price
-
-#         # Notify Admin
-#         message_admin = (
-#             f"🛍️ *Nouvelle commande reçue !*\n\n"
-#             f"👤 Client : {user.username}\n"
-#             f"📱 Telegram : {user.telegram_number or 'Non fourni'}\n"
-#             f"💰 Total : {total} FCFA\n"
-#             f"🆔 Commande n°{instance.id}\n"
-#             f"🕒 Date : {instance.created_at.strftime('%d/%m/%Y %H:%M')}\n"
-#             f"✅ Statut : {getattr(instance, 'status', 'En attente')}"
-#         )
-#         try:
-#             notify_admin(message_admin)
-#         except Exception as e:
-#             print(f"⚠️ Erreur notification admin: {e}")
-
-
-# # Similar modification for the Payment Notification
-# def send_payment_notification(sender, instance, created, **kwargs):
-#     if created:
-#         user = instance.order.user
-#         total = instance.order.total_price
-
-#         # Notify Admin
-#         try:
-#             notify_admin(
-#                 f"💰 *Nouveau paiement reçu !*\n\n"
-#                 f"👤 Client : {user.username}\n"
-#                 f"💸 Montant : {total} FCFA\n"
-#                 f"📱 Telegram : {user.telegram_number or 'Non fourni'}\n"
-#                 f"📦 Commande n°{instance.order.id}\n"
-#                 f"📷 Capture reçue."
-#             )
-#         except Exception as e:
-#             print(f"⚠️ Erreur notification admin: {e}")
