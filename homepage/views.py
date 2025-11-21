@@ -7,7 +7,7 @@ from .serializers import HomepageContentSerializer, CarouselImageSerializer, Ads
 from orders.models import OrderItem
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-import os
+
 
 class HomepageContentViewSet(viewsets.ModelViewSet):
     queryset = HomepageContent.objects.all()
@@ -32,16 +32,18 @@ class HomepageContentViewSet(viewsets.ModelViewSet):
         instance.top10_text = data.get("top10_text", instance.top10_text)
         instance.save()
 
-        # Ajout de nouvelles images
-        for file in request.FILES.getlist("banner_images"):
-            banner = CarouselImage.objects.create(image=file)
-            instance.banner_images.add(banner)
+        # Ajout images Carrousel
+        if "banner_images" in request.FILES:
+            for file in request.FILES.getlist("banner_images"):
+                banner = CarouselImage.objects.create(image=file)
+                instance.banner_images.add(banner)
 
-        for file in request.FILES.getlist("ads_images"):
-            ad = AdsImage.objects.create(image=file)
-            instance.ads_images.add(ad)
+        # Ajout images Ads
+        if "ads_images" in request.FILES:
+            for file in request.FILES.getlist("ads_images"):
+                ad = AdsImage.objects.create(image=file)
+                instance.ads_images.add(ad)
 
-        # ✅ Diffusion WebSocket (mise à jour temps réel)
         self.broadcast_homepage_update()
 
         serializer = HomepageContentSerializer(instance, context={"request": request})
@@ -53,20 +55,21 @@ class HomepageContentViewSet(viewsets.ModelViewSet):
             top10_text=request.data.get("top10_text", "Top 10 Afrique")
         )
 
-        for file in request.FILES.getlist("banner_images"):
-            banner = CarouselImage.objects.create(image=file)
-            instance.banner_images.add(banner)
+        if "banner_images" in request.FILES:
+            for file in request.FILES.getlist("banner_images"):
+                banner = CarouselImage.objects.create(image=file)
+                instance.banner_images.add(banner)
 
-        for file in request.FILES.getlist("ads_images"):
-            ad = AdsImage.objects.create(image=file)
-            instance.ads_images.add(ad)
+        if "ads_images" in request.FILES:
+            for file in request.FILES.getlist("ads_images"):
+                ad = AdsImage.objects.create(image=file)
+                instance.ads_images.add(ad)
 
         self.broadcast_homepage_update()
         serializer = HomepageContentSerializer(instance, context={"request": request})
         return Response(serializer.data, status=201)
 
     def broadcast_homepage_update(self):
-        """🔔 Notifie les clients WebSocket connectés"""
         channel_layer = get_channel_layer()
         data = {"type": "homepage_update", "data": {"refresh": True}}
         async_to_sync(channel_layer.group_send)("homepage_updates", data)
@@ -83,13 +86,10 @@ class CarouselImageViewSet(viewsets.ModelViewSet):
         return context
 
     def destroy(self, request, *args, **kwargs):
-        """🗑️ Supprime une image du carrousel"""
+        """Compatible Cloudinary (pas de .path)"""
         instance = self.get_object()
-        image_path = instance.image.path if instance.image else None
         instance.delete()
-        if image_path and os.path.exists(image_path):
-            os.remove(image_path)
-        return Response({"message": "Image du carrousel supprimée avec succès."}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "Image carrousel supprimée."}, status=status.HTTP_204_NO_CONTENT)
 
 
 class AdsImageViewSet(viewsets.ModelViewSet):
@@ -103,19 +103,14 @@ class AdsImageViewSet(viewsets.ModelViewSet):
         return context
 
     def destroy(self, request, *args, **kwargs):
-        """🗑️ Supprime une image de publicité"""
         instance = self.get_object()
-        image_path = instance.image.path if instance.image else None
         instance.delete()
-        if image_path and os.path.exists(image_path):
-            os.remove(image_path)
-        return Response({"message": "Image publicitaire supprimée avec succès."}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "Image pub supprimée."}, status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
 def top10_afrique(request):
-    """🔝 Retourne le Top 10 Afrique basé sur les commandes."""
     items = OrderItem.objects.select_related("movie", "season__series")
     stats = {}
 
@@ -134,6 +129,7 @@ def top10_afrique(request):
         stats[title]["count"] += 1
 
     sorted_items = sorted(stats.values(), key=lambda x: x["count"], reverse=True)[:10]
+
     for item in sorted_items:
         if item["image"]:
             item["image"] = request.build_absolute_uri(item["image"])
