@@ -20,10 +20,15 @@ User = get_user_model()
 #    LISTE + DETAIL USER
 # ============================
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by("-id")
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser]
 
+
+    def list(self, request, *args, **kwargs):
+        users = User.objects.all().order_by("-id")
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
 
 # ============================
 #    INSCRIPTION

@@ -5,7 +5,7 @@ from rest_framework.routers import DefaultRouter
 from .views import UserViewSet, RegisterView, CustomLoginView
 
 router = DefaultRouter()
-router.register("accounts", UserViewSet, basename="accounts")
+router.register("", UserViewSet, basename="users")
 
 urlpatterns = [
     path("register/", RegisterView.as_view(), name="register"),
