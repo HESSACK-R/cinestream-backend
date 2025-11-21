@@ -1,3 +1,4 @@
+# cinestream/backend/catalog/serializers.py
 from rest_framework import serializers
 from .models import Movie, Season
 
@@ -19,18 +20,18 @@ class SeasonSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         """
         Retourne l’image de la série parente.
-        (Saisons n'ont pas d’image propre)
+        (Les saisons n'ont pas d’image propre)
         """
         request = self.context.get("request")
+        if not request:
+            return None
         if obj.series.image and hasattr(obj.series.image, "url"):
             return request.build_absolute_uri(obj.series.image.url)
         return None
 
 
-
 class MovieSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(required=False, allow_null=True)
-
     seasons = serializers.SerializerMethodField()
 
     class Meta:
@@ -41,7 +42,7 @@ class MovieSerializer(serializers.ModelSerializer):
         rep = super().to_representation(instance)
         request = self.context.get("request")
 
-        if instance.image:
+        if request and instance.image and hasattr(instance.image, "url"):
             rep["image"] = request.build_absolute_uri(instance.image.url)
         else:
             rep["image"] = None

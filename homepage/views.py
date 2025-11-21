@@ -12,7 +12,7 @@ from django.conf import settings
 
 
 class HomepageContentViewSet(viewsets.ModelViewSet):
-    queryset = HomepageContent.objects.all()
+    queryset = HomepageContent.objects.all().order_by("-id")
     serializer_class = HomepageContentSerializer
     permission_classes = [permissions.IsAdminUser]
 
