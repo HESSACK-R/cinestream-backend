@@ -8,6 +8,7 @@ from .serializers import HomepageContentSerializer, CarouselImageSerializer, Ads
 from orders.models import OrderItem
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.conf import settings
 
 
 class HomepageContentViewSet(viewsets.ModelViewSet):
@@ -98,7 +99,13 @@ class HomepageContentViewSet(viewsets.ModelViewSet):
     # 🔔 WebSocket Broadcast
     # ======================================================
     def broadcast_homepage_update(self):
+        if not settings.DEBUG:
+            return
+        
         layer = get_channel_layer()
+        if layer is None:
+            return
+        
         data = {"type": "homepage_update", "data": {"refresh": True}}
         async_to_sync(layer.group_send)("homepage_updates", data)
 
